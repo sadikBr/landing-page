@@ -1,38 +1,8 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
-// import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const portfolioButton = document.getElementById("go-to-portfolio") as HTMLButtonElement;
-
-// class DatGUI {
-//   interface: dat.GUI;
-// 
-//   constructor() {
-//     this.interface = new dat.GUI();
-//   }
-// 
-//   addPlaneProperty(
-//     obj: any,
-//     name: string,
-//     min: number,
-//     max: number,
-//     object: THREE.Mesh
-//   ) {
-//     this.interface.add(obj, name, min, max).onChange(() => {
-//       object.geometry.dispose();
-// 
-//       object.geometry = new THREE.PlaneGeometry(
-//         obj.width,
-//         obj.height,
-//         obj.segments,
-//         obj.segments
-//       );
-// 
-//       customizePlane(object);
-//     });
-//   }
-// }
 
 class World {
   rayCaster: THREE.Raycaster;
@@ -64,7 +34,6 @@ class World {
     this.objects = new Map();
 
     this.mousePosition = new THREE.Vector2(0, 0);
-    // this.interface = new DatGUI();
     this.frameCount = 0;
 
     new OrbitControls(this.camera, this.renderer.domElement);
@@ -107,7 +76,7 @@ class World {
         duration: .5,
         delay: 3,
         onComplete: () => {
-          window.location.href = "https://portfolio.brahimsadik.com";
+          window.location.href = "https://player.brahimsadik.com";
         }
       });
     });
@@ -288,21 +257,3 @@ for (let i = 0; i < 1000; i++) {
 addEventListener('resize', () => {
   world.resize();
 });
-
-// Dat.GUI interface
-// const worldObject = {
-//   plane: {
-//     width: 500,
-//     height: 500,
-//     segments: 65,
-//   },
-// };
-// world.interface.addPlaneProperty(worldObject.plane, 'width', 10, 1000, plane);
-// world.interface.addPlaneProperty(worldObject.plane, 'height', 10, 1000, plane);
-// world.interface.addPlaneProperty(
-//   worldObject.plane,
-//   'segments',
-//   10,
-//   1000,
-//   plane
-// );
