@@ -76,7 +76,7 @@ class World {
         duration: .5,
         delay: 3,
         onComplete: () => {
-          window.location.href = "https://player.brahimsadik.com";
+          window.location.href = "https://portfolio.brahimsadik.com";
         }
       });
     });
