@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const portfolioButton = document.getElementById("go-to-portfolio") as HTMLButtonElement;
+const pageOverlay = document.querySelector('.overlay') as HTMLDivElement;
 
 class World {
   rayCaster: THREE.Raycaster;
@@ -71,9 +72,14 @@ class World {
         duration: 1,
         delay: 2,
       });
+      gsap.to(pageOverlay, {
+        opacity: 1,
+        duration: 0.5,
+        delay: 3
+      });
       gsap.to(this.camera.position, {
         y: 800,
-        duration: .5,
+        duration: 0.5,
         delay: 3,
         onComplete: () => {
           window.location.href = "https://portfolio.brahimsadik.com";

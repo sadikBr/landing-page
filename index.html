@@ -28,13 +28,23 @@
       justify-content: center;
     }
 
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      opacity: 0;
+    }
+
     .container {
       text-align: center;
       max-width: 1200px;
     }
 
     .container h1 {
-      font-size: 2.5rem;
+      font-size: 4rem;
     }
 
     .container p {
@@ -60,14 +70,19 @@
       transition: all .25s ease-in-out;
       box-shadow: 0 0 15px 0 white;
     }
+
+    .emphasis {
+      color: #d54545;
+    }
   </style>
 </head>
 
 <body>
   <canvas id="canvas"></canvas>
   <div class="app">
+    <div class="overlay"></div>
     <div class="container">
-      <h1>SADIK Brahim</h1>
+      <h1>Hi, I am <span class="emphasis">Brahim SADIK</span></h1>
       <p>
         I'm a full-stack developer with a passion for creating beautiful and
         interactive web applications.
