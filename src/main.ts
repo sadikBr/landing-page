@@ -1,6 +1,9 @@
 import gsap from "gsap";
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const MIN_CAMERA_POSITION = 50;
+const MAX_CAMERA_POSITION = 300;
 
 const portfolioButton = document.getElementById(
   "go-to-portfolio",
@@ -32,7 +35,7 @@ class World {
       0.1,
       1000,
     );
-    this.camera.position.z = 150;
+    this.camera.position.z = MIN_CAMERA_POSITION;
     this.scene.add(this.camera);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -45,7 +48,7 @@ class World {
     this.mousePosition = new THREE.Vector2(0, 0);
     this.frameCount = 0;
 
-    new OrbitControls(this.camera, this.renderer.domElement);
+    // new OrbitControls(this.camera, this.renderer.domElement);
 
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(0, 1, 1);
@@ -57,7 +60,7 @@ class World {
 
     // Start Animating the world
     this.animate();
-    this.setupMouseEventListener();
+    this.setupMouseEventListeners();
     this.listenToPortfolioButton();
   }
 
@@ -175,10 +178,15 @@ class World {
     this.renderer.render(this.scene, this.camera);
   }
 
-  setupMouseEventListener() {
+  setupMouseEventListeners() {
     addEventListener("mousemove", (event) => {
       this.mousePosition.x = (event.clientX / innerWidth) * 2 - 1;
       this.mousePosition.y = (event.clientY / innerHeight) * -2 + 1;
+    });
+    addEventListener("wheel", (event) => {
+      const delta = event.deltaY * .1;
+      const newPosition = this.camera.position.z + delta;
+      this.camera.position.z = clamp(newPosition, MIN_CAMERA_POSITION, MAX_CAMERA_POSITION);
     });
   }
 
@@ -188,6 +196,10 @@ class World {
 
     this.renderer.setSize(innerWidth, innerHeight);
   }
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 const world = new World();
