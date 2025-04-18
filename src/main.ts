@@ -1,9 +1,17 @@
-import gsap from 'gsap';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import gsap from "gsap";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const portfolioButton = document.getElementById("go-to-portfolio") as HTMLButtonElement;
-const pageOverlay = document.querySelector('.overlay') as HTMLDivElement;
+const portfolioButton = document.getElementById(
+  "go-to-portfolio",
+) as HTMLButtonElement;
+const pageOverlay = document.querySelector(".overlay") as HTMLDivElement;
+
+addEventListener("DOMContentLoaded", () => {
+  gsap.to(pageOverlay, {
+    opacity: 0,
+  });
+});
 
 class World {
   rayCaster: THREE.Raycaster;
@@ -22,14 +30,14 @@ class World {
       75,
       innerWidth / innerHeight,
       0.1,
-      1000
+      1000,
     );
     this.camera.position.z = 150;
     this.scene.add(this.camera);
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      canvas: document.getElementById('canvas') as HTMLCanvasElement,
+      canvas: document.getElementById("canvas") as HTMLCanvasElement,
     });
     this.renderer.setSize(innerWidth, innerHeight);
     this.objects = new Map();
@@ -75,7 +83,7 @@ class World {
       gsap.to(pageOverlay, {
         opacity: 1,
         duration: 0.5,
-        delay: 3
+        delay: 3,
       });
       gsap.to(this.camera.position, {
         y: 800,
@@ -83,7 +91,7 @@ class World {
         delay: 3,
         onComplete: () => {
           window.location.href = "https://portfolio.brahimsadik.com";
-        }
+        },
       });
     });
   }
@@ -96,10 +104,10 @@ class World {
   updateColor(
     color: any,
     face: THREE.Face,
-    newColor: { r: number; g: number; b: number }
+    newColor: { r: number; g: number; b: number },
   ) {
     for (const key in face) {
-      if (key === 'a' || key === 'b' || key === 'c') {
+      if (key === "a" || key === "b" || key === "c") {
         color.setX(face[key], newColor.r);
         color.setY(face[key], newColor.g);
         color.setZ(face[key], newColor.b);
@@ -113,7 +121,7 @@ class World {
     requestAnimationFrame(() => this.animate());
     this.frameCount += 0.01;
 
-    const plane = this.objects.get('plane');
+    const plane = this.objects.get("plane");
     if (plane != undefined) {
       this.rayCaster.setFromCamera(this.mousePosition, this.camera);
 
@@ -157,7 +165,7 @@ class World {
             this.updateColor(
               color,
               intersects[0].face as THREE.Face,
-              hoverColor
+              hoverColor,
             );
           },
         });
@@ -168,7 +176,7 @@ class World {
   }
 
   setupMouseEventListener() {
-    addEventListener('mousemove', (event) => {
+    addEventListener("mousemove", (event) => {
       this.mousePosition.x = (event.clientX / innerWidth) * 2 - 1;
       this.mousePosition.y = (event.clientY / innerHeight) * -2 + 1;
     });
@@ -192,7 +200,7 @@ const plane = new THREE.Mesh(
     side: THREE.DoubleSide,
     flatShading: true,
     vertexColors: true,
-  })
+  }),
 );
 
 function customizePlane(plane: THREE.Mesh) {
@@ -228,14 +236,14 @@ function customizePlane(plane: THREE.Mesh) {
   }
   // @ts-ignore
   plane.geometry.setAttribute(
-    'color',
-    new THREE.BufferAttribute(new Float32Array(colors), 3)
+    "color",
+    new THREE.BufferAttribute(new Float32Array(colors), 3),
   );
 }
 
 customizePlane(plane);
 
-world.addObject('plane', plane);
+world.addObject("plane", plane);
 
 // Starfield creation code
 for (let i = 0; i < 1000; i++) {
@@ -243,7 +251,7 @@ for (let i = 0; i < 1000; i++) {
     new THREE.SphereGeometry(Math.random() + 1, 20, 20),
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
-    })
+    }),
   );
 
   const r = 500 + Math.random() * 500;
@@ -253,13 +261,13 @@ for (let i = 0; i < 1000; i++) {
   star.position.set(
     r * Math.sin(theta) * Math.cos(phi),
     r * Math.sin(theta) * Math.sin(phi),
-    r * Math.cos(theta)
+    r * Math.cos(theta),
   );
 
   world.addObject(`star${i}`, star);
 }
 
 // Event listeners
-addEventListener('resize', () => {
+addEventListener("resize", () => {
   world.resize();
 });
