@@ -1,285 +1,119 @@
 import gsap from "gsap";
-import * as THREE from "three";
-// import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import type { World } from "./world";
 
-const MIN_CAMERA_POSITION = 50;
-const MAX_CAMERA_POSITION = 300;
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
 
-const portfolioButton = document.getElementById(
+const PORTFOLIO_URL = "https://portfolio.brahimsadik.com";
+
+const prefersReducedMotion = matchMedia(
+  "(prefers-reduced-motion: reduce)",
+).matches;
+
+// ---------------------------------------------------------------------------
+// DOM
+// ---------------------------------------------------------------------------
+
+const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const portfolioLink = document.getElementById(
   "go-to-portfolio",
-) as HTMLButtonElement;
+) as HTMLAnchorElement;
 const pageOverlay = document.querySelector(".overlay") as HTMLDivElement;
+const revealItems = document.querySelectorAll<HTMLElement>("[data-reveal]");
+const promptCommand = document.querySelector<HTMLElement>(".prompt__cmd");
 
-addEventListener("DOMContentLoaded", () => {
-  gsap.to(pageOverlay, {
-    opacity: 0,
+// ---------------------------------------------------------------------------
+// Bootstrap
+// ---------------------------------------------------------------------------
+
+let world: World | null = null;
+
+/** Loads three.js after the text is on screen, then fades the scene in. */
+async function startWorld() {
+  try {
+    const { World } = await import("./world");
+    world = new World(canvas, pageOverlay);
+    gsap.to(canvas, { opacity: 1, duration: 1.2, ease: "power2.out" });
+    if (!prefersReducedMotion) world.ripple(0, 0, 1);
+  } catch (error) {
+    // No WebGL (or the chunk failed to load): the page works on the plain background.
+    console.warn("3D background unavailable.", error);
+    canvas.remove();
+  }
+}
+
+function intro() {
+  gsap.to(pageOverlay, { opacity: 0, duration: 1, ease: "power2.out" });
+  if (!prefersReducedMotion) {
+    gsap.from(revealItems, {
+      opacity: 0,
+      y: 24,
+      duration: 1,
+      delay: 0.2,
+      stagger: 0.12,
+      ease: "power3.out",
+    });
+    typeCommand();
+  }
+}
+
+/** Types the terminal command in the prompt pill, one key at a time. */
+function typeCommand() {
+  if (!promptCommand) return;
+  const text = promptCommand.dataset.type ?? "";
+  const progress = { chars: 0 };
+
+  promptCommand.textContent = "";
+  gsap.to(progress, {
+    chars: text.length,
+    duration: text.length * 0.09,
+    delay: 0.7,
+    ease: "none",
+    snap: { chars: 1 },
+    onUpdate: () => {
+      promptCommand.textContent = text.slice(0, progress.chars);
+    },
   });
+}
+
+intro();
+void startWorld();
+
+portfolioLink.addEventListener("click", (event) => {
+  // Let ctrl/cmd/shift/middle-click open a new tab/window as usual.
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+    return;
+  }
+  event.preventDefault();
+
+  document.body.classList.add("is-leaving");
+  portfolioLink.setAttribute("aria-disabled", "true");
+
+  const go = () => window.location.assign(PORTFOLIO_URL);
+
+  if (world && !prefersReducedMotion) {
+    // Lift the content away as the camera starts to move.
+    gsap.to(revealItems, {
+      opacity: 0,
+      y: -16,
+      duration: 0.6,
+      stagger: 0.05,
+      ease: "power2.in",
+    });
+    world.flyAway(go);
+  } else {
+    gsap.to(pageOverlay, { opacity: 1, duration: 0.4, onComplete: go });
+  }
 });
 
-class World {
-  rayCaster: THREE.Raycaster;
-  scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
-  renderer: THREE.WebGLRenderer;
-  objects: Map<string, THREE.Mesh>;
-  // interface: DatGUI;
-  frameCount: number;
-  mousePosition: THREE.Vector2;
-
-  constructor() {
-    this.scene = new THREE.Scene();
-    this.rayCaster = new THREE.Raycaster();
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      innerWidth / innerHeight,
-      0.1,
-      1000,
-    );
-    this.camera.position.z = MIN_CAMERA_POSITION;
-    this.scene.add(this.camera);
-
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      canvas: document.getElementById("canvas") as HTMLCanvasElement,
-    });
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.objects = new Map();
-
-    this.mousePosition = new THREE.Vector2(0, 0);
-    this.frameCount = 0;
-
-    // new OrbitControls(this.camera, this.renderer.domElement);
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(0, 1, 1);
-    this.scene.add(light);
-
-    const backLight = new THREE.DirectionalLight(0xffffff, 1);
-    backLight.position.set(0, 0, -1);
-    this.scene.add(backLight);
-
-    // Start Animating the world
-    this.animate();
-    this.setupMouseEventListeners();
-    this.listenToPortfolioButton();
-  }
-
-  listenToPortfolioButton() {
-    portfolioButton.addEventListener("click", () => {
-      document.documentElement.style.pointerEvents = "none";
-      portfolioButton.setAttribute("disabled", "true");
-      gsap.to(this.camera.rotation, {
-        x: 1.5,
-        y: 0,
-        z: 0,
-        duration: 2,
-      });
-      gsap.to(this.camera.position, {
-        z: 40,
-        duration: 2,
-      });
-      gsap.to(this.camera.position, {
-        y: -100,
-        duration: 1,
-        delay: 2,
-      });
-      gsap.to(pageOverlay, {
-        opacity: 1,
-        duration: 0.5,
-        delay: 3,
-      });
-      gsap.to(this.camera.position, {
-        y: 800,
-        duration: 0.5,
-        delay: 3,
-        onComplete: () => {
-          window.location.href = "https://portfolio.brahimsadik.com";
-        },
-      });
-    });
-  }
-
-  addObject(name: string, object: THREE.Mesh) {
-    this.objects.set(name, object);
-    this.scene.add(object);
-  }
-
-  updateColor(
-    color: any,
-    face: THREE.Face,
-    newColor: { r: number; g: number; b: number },
-  ) {
-    for (const key in face) {
-      if (key === "a" || key === "b" || key === "c") {
-        color.setX(face[key], newColor.r);
-        color.setY(face[key], newColor.g);
-        color.setZ(face[key], newColor.b);
-      }
-    }
-
-    color.needsUpdate = true;
-  }
-
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    this.frameCount += 0.01;
-
-    const plane = this.objects.get("plane");
-    if (plane != undefined) {
-      this.rayCaster.setFromCamera(this.mousePosition, this.camera);
-
-      // @ts-ignore
-      const { array, originalPosition, randomValues } =
-        plane.geometry.attributes.position;
-      for (let i = 0; i < array.length; i += 3) {
-        array[i] =
-          originalPosition[i] +
-          Math.cos(this.frameCount + randomValues[i]) * 0.006;
-        array[i + 1] =
-          originalPosition[i + 1] +
-          Math.sin(this.frameCount + randomValues[i + 1]) * 0.006;
-      }
-      plane.geometry.attributes.position.needsUpdate = true;
-
-      const intersects = this.rayCaster.intersectObject(plane);
-
-      if (intersects.length > 0) {
-        const initialColor = {
-          r: 0.01,
-          g: 0.03,
-          b: 0.12,
-        };
-
-        const hoverColor = {
-          r: 0.1,
-          g: 0.5,
-          b: 1,
-        };
-
-        // @ts-ignore
-        const { color } = intersects[0].object.geometry.attributes;
-        this.updateColor(color, intersects[0].face as THREE.Face, hoverColor);
-
-        gsap.to(hoverColor, {
-          r: initialColor.r,
-          g: initialColor.g,
-          b: initialColor.b,
-          onUpdate: () => {
-            this.updateColor(
-              color,
-              intersects[0].face as THREE.Face,
-              hoverColor,
-            );
-          },
-        });
-      }
-    }
-
-    this.renderer.render(this.scene, this.camera);
-  }
-
-  setupMouseEventListeners() {
-    addEventListener("mousemove", (event) => {
-      this.mousePosition.x = (event.clientX / innerWidth) * 2 - 1;
-      this.mousePosition.y = (event.clientY / innerHeight) * -2 + 1;
-    });
-    addEventListener("wheel", (event) => {
-      const delta = event.deltaY * .1;
-      const newPosition = this.camera.position.z + delta;
-      this.camera.position.z = clamp(newPosition, MIN_CAMERA_POSITION, MAX_CAMERA_POSITION);
-    });
-  }
-
-  resize() {
-    this.camera.aspect = innerWidth / innerHeight;
-    this.camera.updateProjectionMatrix();
-
-    this.renderer.setSize(innerWidth, innerHeight);
-  }
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-const world = new World();
-
-// Plane creation code
-const plane = new THREE.Mesh(
-  new THREE.PlaneGeometry(1000, 1000, 170, 170),
-  new THREE.MeshPhongMaterial({
-    // color: 'green',
-    side: THREE.DoubleSide,
-    flatShading: true,
-    vertexColors: true,
-  }),
-);
-
-function customizePlane(plane: THREE.Mesh) {
-  // @ts-ignore
-  const { array } = plane.geometry.attributes.position;
-  const randomValues = [];
-
-  for (let i = 0; i < array.length; i += 1) {
-    if (i % 3 === 0) {
-      const x = array[i];
-      const y = array[i + 1];
-      const z = array[i + 2];
-
-      array[i] = x + (Math.random() - 0.5) * 2;
-      array[i + 1] = y + (Math.random() - 0.5) * 2;
-      array[i + 2] = z + (Math.random() - 0.5) * 10;
-    }
-
-    randomValues.push((Math.random() - 0.5) * 15);
-  }
-
-  // @ts-ignore
-  plane.geometry.attributes.position.randomValues = randomValues;
-
-  // @ts-ignore
-  plane.geometry.attributes.position.originalPosition =
-    // @ts-ignore
-    plane.geometry.attributes.position.array;
-
-  const colors: number[] = [];
-  for (let i = 0; i < plane.geometry.attributes.position.count; i++) {
-    colors.push(0.01, 0.03, 0.12);
-  }
-  // @ts-ignore
-  plane.geometry.setAttribute(
-    "color",
-    new THREE.BufferAttribute(new Float32Array(colors), 3),
-  );
-}
-
-customizePlane(plane);
-
-world.addObject("plane", plane);
-
-// Starfield creation code
-for (let i = 0; i < 1000; i++) {
-  const star = new THREE.Mesh(
-    new THREE.SphereGeometry(Math.random() + 1, 20, 20),
-    new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-    }),
-  );
-
-  const r = 500 + Math.random() * 500;
-  const theta = Math.random() * Math.PI * 2;
-  const phi = Math.random() * Math.PI;
-
-  star.position.set(
-    r * Math.sin(theta) * Math.cos(phi),
-    r * Math.sin(theta) * Math.sin(phi),
-    r * Math.cos(theta),
-  );
-
-  world.addObject(`star${i}`, star);
-}
-
-// Event listeners
-addEventListener("resize", () => {
-  world.resize();
+// Restore the page if the user comes back with the browser's back button.
+addEventListener("pageshow", (event) => {
+  if (!event.persisted) return;
+  document.body.classList.remove("is-leaving");
+  portfolioLink.removeAttribute("aria-disabled");
+  world?.reset();
+  gsap.killTweensOf(revealItems);
+  gsap.set(revealItems, { clearProps: "opacity,transform" });
+  intro();
 });
