@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { createTerminal } from "./terminal";
 import type { World } from "./world";
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,14 @@ const portfolioLink = document.getElementById(
 ) as HTMLAnchorElement;
 const pageOverlay = document.querySelector(".overlay") as HTMLDivElement;
 const revealItems = document.querySelectorAll<HTMLElement>("[data-reveal]");
-const promptCommand = document.querySelector<HTMLElement>(".prompt__cmd");
+
+const terminal = createTerminal({
+  form: document.querySelector(".prompt") as HTMLFormElement,
+  input: document.querySelector(".prompt__input") as HTMLInputElement,
+  display: document.querySelector(".prompt__cmd") as HTMLElement,
+  panel: document.getElementById("terminal") as HTMLElement,
+  onPortfolio: () => portfolioLink.click(),
+});
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -54,27 +62,8 @@ function intro() {
       stagger: 0.12,
       ease: "power3.out",
     });
-    typeCommand();
+    terminal.typeIntro();
   }
-}
-
-/** Types the terminal command in the prompt pill, one key at a time. */
-function typeCommand() {
-  if (!promptCommand) return;
-  const text = promptCommand.dataset.type ?? "";
-  const progress = { chars: 0 };
-
-  promptCommand.textContent = "";
-  gsap.to(progress, {
-    chars: text.length,
-    duration: text.length * 0.09,
-    delay: 0.7,
-    ease: "none",
-    snap: { chars: 1 },
-    onUpdate: () => {
-      promptCommand.textContent = text.slice(0, progress.chars);
-    },
-  });
 }
 
 intro();
@@ -88,6 +77,7 @@ portfolioLink.addEventListener("click", (event) => {
   event.preventDefault();
 
   document.body.classList.add("is-leaving");
+  terminal.close();
   portfolioLink.setAttribute("aria-disabled", "true");
 
   const go = () => window.location.assign(PORTFOLIO_URL);
@@ -105,6 +95,31 @@ portfolioLink.addEventListener("click", (event) => {
   } else {
     gsap.to(pageOverlay, { opacity: 1, duration: 0.4, onComplete: go });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Keyboard shortcuts (shown on the matching links)
+// ---------------------------------------------------------------------------
+
+addEventListener("keydown", (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+  if ((event.target as Element | null)?.closest("input, textarea, select")) return;
+  if (document.body.classList.contains("is-leaving")) return;
+
+  if (event.key === "/" || event.key === "`") {
+    event.preventDefault();
+    terminal.focus();
+    return;
+  }
+  if (event.key.toLowerCase() === "p") {
+    portfolioLink.click();
+    return;
+  }
+  if (!/^[a-z]$/i.test(event.key)) return;
+  const target = document.querySelector<HTMLAnchorElement>(
+    `[data-key="${event.key.toLowerCase()}"]`,
+  );
+  target?.click();
 });
 
 // Restore the page if the user comes back with the browser's back button.

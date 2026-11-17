@@ -185,7 +185,7 @@
         align-self: center;
         justify-self: center;
         width: min(100%, 1120px);
-        padding-block: clamp(1.5rem, 1rem + 3vh, 3rem);
+        padding-block: clamp(0.75rem, 0.25rem + 2.5vh, 3rem);
         text-align: left;
         isolation: isolate;
       }
@@ -206,12 +206,25 @@
         );
       }
 
+      /* ---------- Terminal ---------- */
+
+      .console {
+        position: relative;
+        z-index: 3; /* its output opens over the title */
+        width: fit-content;
+        max-width: 100%;
+        margin: 0 0 clamp(1.25rem, 0.75rem + 2vh, 2.25rem);
+      }
+
       .prompt {
+        position: relative;
         display: inline-flex;
         align-items: center;
         gap: 0.6rem;
-        margin: 0 0 clamp(1.25rem, 0.75rem + 2vh, 2.25rem);
+        margin: 0;
         padding: 0.4rem 0.9rem;
+        cursor: text;
+        transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
         border: 1px solid var(--line);
         border-radius: 999px;
         background: rgba(2, 4, 15, 0.45);
@@ -231,6 +244,107 @@
 
       .prompt__cmd {
         color: var(--fg);
+        white-space: pre;
+      }
+
+      .prompt.is-active {
+        border-color: rgba(77, 141, 255, 0.65);
+        box-shadow: 0 0 24px rgba(77, 141, 255, 0.25);
+      }
+
+      /* Invisible but real: it takes the keys, the spans above draw them. */
+      .prompt__input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        opacity: 0;
+        font-size: 16px; /* stops iOS zooming in on focus */
+        cursor: text;
+      }
+
+      .prompt__hint {
+        margin-left: 0.4rem;
+        color: var(--fg-subtle);
+        font-size: 0.85em;
+        white-space: nowrap;
+      }
+
+      .prompt.is-active .prompt__hint {
+        display: none;
+      }
+
+      .prompt__hint--touch {
+        display: none;
+      }
+
+      .terminal {
+        position: absolute;
+        top: calc(100% + 0.6rem);
+        left: 0;
+        width: min(36rem, calc(100vw - 2rem));
+        max-height: min(46vh, 22rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        background: rgba(4, 8, 24, 0.88);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.85rem);
+        line-height: 1.65;
+        color: var(--fg-muted);
+      }
+
+      .terminal[hidden] {
+        display: none;
+      }
+
+      .terminal__line {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .terminal__line--echo {
+        margin-top: 0.5rem;
+        color: var(--fg);
+      }
+
+      .terminal__line--echo:first-child {
+        margin-top: 0;
+      }
+
+      .terminal__sigil {
+        color: var(--accent);
+      }
+
+      .terminal__cmd {
+        color: var(--blue);
+      }
+
+      .terminal__muted {
+        color: var(--fg-subtle);
+      }
+
+      .terminal__ok {
+        color: #5ad18a;
+      }
+
+      .terminal a {
+        color: var(--fg);
+        text-decoration: underline;
+        text-decoration-color: rgba(77, 141, 255, 0.6);
+        text-underline-offset: 3px;
+      }
+
+      .terminal a:hover,
+      .terminal a:focus-visible {
+        color: var(--blue);
       }
 
       .prompt__caret {
@@ -262,7 +376,7 @@
       .title__name {
         display: block;
         /* Bounded by height too, so it never crowds short landscape screens. */
-        font-size: clamp(3rem, min(1rem + 8.5vw, 15vh), 8.5rem);
+        font-size: clamp(3rem, min(1rem + 8.5vw, 12.5vh), 8.5rem);
         font-weight: 700;
         letter-spacing: -0.04em;
         line-height: 0.92;
@@ -299,7 +413,7 @@
 
       .rule {
         height: 1px;
-        margin: clamp(1.75rem, 1rem + 3vh, 3rem) 0;
+        margin: clamp(1.25rem, 0.5rem + 2.5vh, 2.5rem) 0;
         background: linear-gradient(90deg, var(--accent), rgba(77, 141, 255, 0.5) 40%, transparent);
         transform-origin: left;
       }
@@ -404,16 +518,273 @@
         outline-offset: 5px;
       }
 
+      .cta .key {
+        margin-left: 0.2rem;
+      }
+
       .cta[aria-disabled="true"] {
         cursor: default;
       }
 
-      /* ---------- Bottom hint ---------- */
+      /* ---------- Shortcut keys ---------- */
+
+      .key {
+        display: inline-block;
+        min-width: 1.6em;
+        padding: 0.1em 0.35em;
+        border: 1px solid currentColor;
+        border-radius: 3px;
+        font: inherit;
+        font-size: 0.7em;
+        line-height: 1.3;
+        letter-spacing: 0;
+        text-align: center;
+        opacity: 0.5;
+      }
+
+      kbd:not(.key) {
+        font: inherit;
+        color: var(--fg-muted);
+      }
+
+      /* ---------- Links ---------- */
+
+      .actions {
+        display: grid;
+        justify-items: end;
+        gap: 1rem;
+      }
+
+      .socials {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .social {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 2.6rem;
+        height: 2.6rem;
+        border: 1px solid var(--line);
+        border-radius: 0.25rem;
+        background: rgba(2, 4, 15, 0.55);
+        backdrop-filter: blur(8px);
+        color: var(--fg-muted);
+        text-decoration: none;
+        transition:
+          color 0.3s var(--ease-out),
+          border-color 0.3s var(--ease-out),
+          box-shadow 0.3s var(--ease-out),
+          transform 0.3s var(--ease-out);
+      }
+
+      .social svg {
+        width: 1.1rem;
+        height: 1.1rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .social:hover,
+      .social:focus-visible {
+        color: var(--fg);
+        border-color: rgba(77, 141, 255, 0.65);
+        box-shadow: 0 0 18px rgba(77, 141, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .social:focus-visible {
+        outline: 1px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      /* The label doubles as a tooltip (and stays readable to screen readers). */
+      .social__label {
+        position: absolute;
+        bottom: calc(100% + 0.5rem);
+        left: 50%;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 0.55rem;
+        border: 1px solid var(--line);
+        border-radius: 0.25rem;
+        background: rgba(4, 8, 24, 0.92);
+        color: var(--fg);
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-50%, 4px);
+        transition: opacity 0.2s, transform 0.2s var(--ease-out);
+      }
+
+      .social .key {
+        position: absolute;
+        top: -0.45rem;
+        right: -0.45rem;
+        min-width: 1.15rem;
+        padding: 0 0.2rem;
+        border-color: var(--line);
+        border-radius: 3px;
+        background: var(--bg);
+        color: var(--fg-muted);
+        font-size: 0.6rem;
+        /* Always on: a shortcut you only see while hovering is no shortcut. */
+        opacity: 0.85;
+        transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+      }
+
+      .social:hover .social__label,
+      .social:focus-visible .social__label {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      .social:hover .key,
+      .social:focus-visible .key {
+        opacity: 1;
+        color: var(--fg);
+        border-color: rgba(77, 141, 255, 0.65);
+      }
+
+      /* ---------- Featured work ---------- */
+
+      .work {
+        position: relative;
+        display: grid;
+        gap: 0.75rem;
+        width: min(100%, 1120px);
+        justify-self: center;
+      }
+
+      .work__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .work__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+
+      .work__label::before {
+        content: "";
+        width: 1.5rem;
+        height: 1px;
+        background: var(--accent);
+      }
+
+      .work__list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .project {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 0.85rem;
+        height: 100%;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 0.5rem;
+        background: rgba(2, 4, 15, 0.55);
+        backdrop-filter: blur(10px);
+        color: inherit;
+        text-decoration: none;
+        transition:
+          border-color 0.3s var(--ease-out),
+          background-color 0.3s var(--ease-out),
+          box-shadow 0.3s var(--ease-out),
+          transform 0.3s var(--ease-out);
+      }
+
+      .project:hover,
+      .project:focus-visible {
+        border-color: rgba(77, 141, 255, 0.6);
+        background: rgba(6, 12, 36, 0.72);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 0 24px rgba(77, 141, 255, 0.15);
+        transform: translateY(-3px);
+      }
+
+      .project:focus-visible {
+        outline: 1px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      .project__index {
+        padding-top: 0.1rem;
+        color: var(--accent);
+        font-size: 0.7rem;
+      }
+
+      .project__name {
+        display: block;
+        color: var(--fg);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .project__desc {
+        display: -webkit-box;
+        margin: 0.2rem 0 0.45rem;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        color: var(--fg-muted);
+        font-size: 0.75rem;
+        line-height: 1.5;
+      }
+
+      .project__tags {
+        display: block;
+        color: rgba(130, 170, 255, 0.85);
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+      }
+
+      .project__arrow {
+        width: 1rem;
+        height: 1rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        color: var(--fg-subtle);
+        transition: transform 0.3s var(--ease-out), color 0.3s;
+      }
+
+      .project:hover .project__arrow,
+      .project:focus-visible .project__arrow {
+        color: var(--fg);
+        transform: translate(2px, -2px);
+      }
+
+      /* ---------- Interaction hint ---------- */
 
       .hint {
         position: relative;
         display: flex;
-        justify-content: center;
         align-items: center;
         gap: 0.75rem;
         font-size: 0.7rem;
@@ -452,18 +823,59 @@
         display: none;
       }
 
-      @media (hover: none) {
+      @media (hover: none) and (pointer: coarse) {
         .hint--pointer { display: none; }
         .hint--touch { display: flex; }
+        .prompt__hint--pointer { display: none; }
+        .prompt__hint--touch { display: inline; }
+        .key { display: none; }
       }
 
       @media (max-width: 600px) {
-        .status__label { display: none; }
+        .status { font-size: 0.62rem; letter-spacing: 0.14em; }
+      }
+
+      @media (max-width: 900px) {
+        .hint--pointer { display: none; }
       }
 
       @media (max-width: 720px) {
-        .hero__foot { grid-template-columns: 1fr; gap: 1.75rem; }
-        .cta { justify-self: start; }
+        .hero__foot { grid-template-columns: 1fr; gap: 1.5rem; }
+        .actions {
+          grid-template-columns: auto auto;
+          justify-content: start;
+          justify-items: start;
+          align-items: center;
+          gap: 0.75rem 1rem;
+        }
+        .socials { gap: 0.4rem; }
+        /* Cards become a swipeable row. */
+        .work__list {
+          grid-template-columns: none;
+          grid-auto-flow: column;
+          grid-auto-columns: min(78%, 20rem);
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          touch-action: pan-x;
+          margin-inline: calc(-1 * clamp(1rem, 0.5rem + 3vw, 3rem));
+          padding-inline: clamp(1rem, 0.5rem + 3vw, 3rem);
+          scroll-padding-inline: clamp(1rem, 0.5rem + 3vw, 3rem);
+        }
+        .work__list::-webkit-scrollbar { display: none; }
+        .work__list > li { scroll-snap-align: start; }
+      }
+
+      @media (max-width: 480px) {
+        .actions { grid-template-columns: 1fr; }
+        .work__head .hint { display: none; }
+      }
+
+      /* Laptop-height screens: give the cards their room. */
+      @media (max-height: 760px) {
+        .title__name { font-size: clamp(3rem, min(1rem + 8.5vw, 11vh), 8.5rem); }
+        .console { margin-bottom: 1rem; }
+        .rule { margin: 1rem 0; }
       }
 
       /* Short screens (phones held sideways, small laptop windows): tighten
@@ -478,7 +890,7 @@
         }
         .hint { display: none; }
         .hero { padding-block: 1rem; }
-        .prompt { margin-bottom: 0.75rem; }
+        .console { margin-bottom: 0.75rem; }
         .title__greeting { margin-bottom: 0.3em; font-size: 0.95rem; }
         .title__name { font-size: clamp(2.25rem, 14vh, 4.5rem); }
         .rule { margin: 1rem 0; }
@@ -525,16 +937,35 @@
         </span>
         <span class="status">
           <span class="status__dot" aria-hidden="true"></span>
-          <span class="status__label">Full-stack developer</span>
+          <span class="status__label">Open to new opportunities</span>
         </span>
       </header>
 
       <section class="hero">
-        <p class="prompt" data-reveal aria-hidden="true">
-          <span class="prompt__path">~/brahim</span>
-          <span class="prompt__sigil">$</span>
-          <span class="prompt__cmd" data-type="whoami">whoami</span><span class="prompt__caret"></span>
-        </p>
+        <div class="console" data-reveal>
+          <form class="prompt" autocomplete="off">
+            <span class="prompt__path" aria-hidden="true">~/brahim</span>
+            <span class="prompt__sigil" aria-hidden="true">$</span>
+            <span class="prompt__cmd" aria-hidden="true">whoami</span><span class="prompt__caret" aria-hidden="true"></span>
+            <!-- The real input sits invisibly on top; main.ts mirrors it into
+                 .prompt__cmd so the block caret and styling stay intact. -->
+            <input
+              class="prompt__input"
+              type="text"
+              aria-label="Terminal: type a command, like help or projects"
+              aria-controls="terminal"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              enterkeyhint="go"
+            />
+            <span class="prompt__hint" aria-hidden="true">
+              <span class="prompt__hint--pointer">press <kbd>/</kbd> to type</span>
+              <span class="prompt__hint--touch">tap to type</span>
+            </span>
+          </form>
+          <div class="terminal" id="terminal" role="log" aria-live="polite" hidden></div>
+        </div>
 
         <h1 class="title" data-reveal>
           <span class="title__greeting">Hi, I am</span>
@@ -553,30 +984,95 @@
             pixels on screen to the servers behind them.
           </p>
 
-          <a
-            id="go-to-portfolio"
-            class="cta"
-            href="https://portfolio.brahimsadik.com"
-            data-reveal
-          >
-            <span>View Portfolio</span>
-            <svg class="cta__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </a>
+          <div class="actions" data-reveal>
+            <a
+              id="go-to-portfolio"
+              class="cta"
+              href="https://portfolio.brahimsadik.com"
+              aria-keyshortcuts="P"
+            >
+              <span>View Portfolio</span>
+              <svg class="cta__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+              <kbd class="key" aria-hidden="true">P</kbd>
+            </a>
+
+            <nav class="socials" aria-label="Elsewhere">
+              <a class="social" href="https://github.com/sadikBr" target="_blank" rel="noopener" data-link="github" data-key="g" aria-keyshortcuts="G">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
+                <span class="social__label">GitHub</span>
+                <kbd class="key" aria-hidden="true">G</kbd>
+              </a>
+              <a class="social" href="https://linkedin.com/in/brahim_sadik" target="_blank" rel="noopener" data-link="linkedin" data-key="l" aria-keyshortcuts="L">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg>
+                <span class="social__label">LinkedIn</span>
+                <kbd class="key" aria-hidden="true">L</kbd>
+              </a>
+              <a class="social" href="mailto:brahimsadik98@gmail.com" data-link="email" data-key="e" aria-keyshortcuts="E">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                <span class="social__label">Email</span>
+                <kbd class="key" aria-hidden="true">E</kbd>
+              </a>
+              <a class="social" href="https://resume-builder.brahimsadik.com" target="_blank" rel="noopener" data-link="cv" data-key="c" aria-keyshortcuts="C">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M16 13H8M16 17H8M10 9H8" /></svg>
+                <span class="social__label">Résumé</span>
+                <kbd class="key" aria-hidden="true">C</kbd>
+              </a>
+            </nav>
+          </div>
         </div>
       </section>
 
-      <footer class="hint" data-reveal aria-hidden="true">
-        <span class="hint hint--pointer">
-          <span class="hint__mouse"></span>
-          <span>Scroll to zoom</span>
-          <span class="hint__sep">/</span>
-          <span>Move to illuminate</span>
-          <span class="hint__sep">/</span>
-          <span>Click to ripple</span>
-        </span>
-        <span class="hint hint--touch">Drag to illuminate · Tap to ripple</span>
+      <footer class="work" data-reveal>
+        <div class="work__head">
+          <h2 class="work__label">Featured work</h2>
+          <span class="hint hint--pointer" aria-hidden="true">
+            <span class="hint__mouse"></span>
+            <span>Scroll to zoom</span>
+            <span class="hint__sep">/</span>
+            <span>Move to illuminate</span>
+            <span class="hint__sep">/</span>
+            <span>Click to ripple</span>
+          </span>
+          <span class="hint hint--touch" aria-hidden="true">Drag to illuminate · Tap to ripple</span>
+        </div>
+
+        <ul class="work__list">
+          <li>
+            <a class="project" href="https://quran.brahimsadik.com" target="_blank" rel="noopener" data-code="https://github.com/sadikBr/quran">
+              <span class="project__index" aria-hidden="true">01</span>
+              <span class="project__body">
+                <span class="project__name">Quran Reader</span>
+                <span class="project__desc">Read, listen, track your memorization and recite live to your circle.</span>
+                <span class="project__tags">Next.js · PostgreSQL · Web Push</span>
+              </span>
+              <svg class="project__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+            </a>
+          </li>
+          <li>
+            <a class="project" href="https://resume-builder.brahimsadik.com" target="_blank" rel="noopener" data-code="https://github.com/sadikBr/resume-builder">
+              <span class="project__index" aria-hidden="true">02</span>
+              <span class="project__body">
+                <span class="project__name">Resume Builder</span>
+                <span class="project__desc">Fill in your details, watch it update live, export a clean PDF.</span>
+                <span class="project__tags">Next.js · TypeScript · Tailwind</span>
+              </span>
+              <svg class="project__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+            </a>
+          </li>
+          <li>
+            <a class="project" href="https://github.com/sadikBr/inkleaf" target="_blank" rel="noopener" data-code="https://github.com/sadikBr/inkleaf">
+              <span class="project__index" aria-hidden="true">03</span>
+              <span class="project__body">
+                <span class="project__name">Inkleaf</span>
+                <span class="project__desc">Handwritten notes for tablets, with pressure-sensitive GPU ink.</span>
+                <span class="project__tags">Qt 6 · C++ · Rust</span>
+              </span>
+              <svg class="project__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+            </a>
+          </li>
+        </ul>
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>
